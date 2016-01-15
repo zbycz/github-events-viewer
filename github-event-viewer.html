@@ -1,0 +1,148 @@
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+      integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+      integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
+      
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<div class="container">
+
+<h1>my github events</h1>
+
+Github access token: (<a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a>)
+<br>
+<input id='token'>
+<input type='button' onclick='localStorage.setItem("token", $("#token").val())' value='set'> 
+
+
+<table class="table table-bordered">
+	<tr>
+		<th style="    width: 186px;">date		</th>
+		<th>repo <br> <input type=checkbox checked id=winsite> winsite
+		<th>action <br> <input type=checkbox checked id=comments> comments only
+	</tr>
+	<tbody id="events">
+		<tr id="eventTemplate">
+			<td>{{date}}
+			<td>{{repo}}
+			<td><a href="{{link}}">{{action}}</a>
+		</tr>
+	</tbody>
+</table>
+<button>load more</button>
+
+</div>
+
+<a href="https://github.com/zbycz/github-events-viewer"><img src="http://github.com/favicon.ico" width="16" alt=""> zbycz/github-events-viewer</a>
+
+<script>
+
+var data = [];
+var page = 1;
+
+function get(){
+	var token = localStorage.getItem('token');
+	$('#token').val(token);
+
+	if (!token)
+		return alert('set token');
+		
+	$.get('https://api.github.com/users/zbycz/events?access_token='+token+'&page='+page, 
+		function(getdata){
+			data = data.concat(getdata);
+			page++;
+			if (page >= 3)
+				write();
+			else
+				get();
+		});
+}
+
+get(1);
+	
+var eventTemplate = document.getElementById('eventTemplate').innerHTML;
+var events = document.getElementById('events');
+
+$('#winsite').click(write);
+$('#comments').click(write);
+$('button').click(function(){ get(); })
+
+function write(){
+	console.log($('#winsite')[0].checked);
+	console.log($('#comments')[0].checked);
+
+	events.innerHTML = ''; //clear
+	
+
+	/** The shortest templating system - eval everyting between { and } */
+	function template(vars) {
+		return eventTemplate.replace(/\{\{(.*?)\}\}/gm, function (match, code) {
+			for (var k in vars) this[k] = vars[k];
+			return eval(code);
+		});
+	}
+
+	String.prototype.ucfirst = function() {
+		return this.charAt(0).toUpperCase() + this.slice(1);
+	}
+
+
+	for (var i = 0; i < data.length; i++) {
+		var r = data[i];
+		
+		if ($('#winsite')[0].checked)
+			if (!r.repo.name.match(/^winsite/))
+				continue; 
+		
+		var link = "#";
+		var action = r.type;
+
+		if (r.type == 'IssuesEvent') {
+			action = r.payload.action.ucfirst() + ' issue #' + r.payload.issue.number + ' ' + r.payload.issue.title;
+			link = r.payload.issue.html_url;
+		}
+
+		if (r.type == 'IssueCommentEvent') {
+			action = 'Commented on #' + r.payload.issue.number +' '+ r.payload.issue.title;
+			link = r.payload.issue.html_url;
+		}
+		
+		if (r.type == 'CommitCommentEvent') {
+			action = 'Commented on commit: '+ r.payload.comment.path;
+			link = r.payload.comment.html_url;
+		}
+
+		if (r.type == 'CreateEvent') {
+			if (r.payload.ref_type == 'tag') continue;
+			action = 'Created ' + r.payload.ref_type + ' ' + (r.payload.ref ? r.payload.ref : '');
+		}
+
+		if (r.type == 'PushEvent') {
+			action = 'Commits: ';
+			for (var x in r.payload.commits){
+				action += r.payload.commits[x].message + '; ';
+			}
+		}
+		
+		if (action.match(/^Commits: embed release winsite/)) continue;
+		if (action.match(/^Commits: v?[0-9\.]+;/)) continue;
+		if ($('#comments')[0].checked)
+			if (!action.match(/^Commented/)) continue;
+
+		var ch = document.createElement("tr");
+		ch.innerHTML = template({
+			date: r.created_at.replace(/[TZ]/, ' '),
+			repo: r.repo.name,
+			action: action,
+			link: link,
+			json: JSON.stringify(r.payload)
+		});
+
+		events.appendChild(ch);
+
+
+	}
+
+}
+
+</script>
