@@ -11,8 +11,8 @@
 
 Github access token: (<a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a>)
 <br>
-<input id='token'>
-<input type='button' onclick='localStorage.setItem("token", $("#token").val())' value='set'> 
+<input id='token'><input id='user' placeholder="user">
+<input type='button' onclick='localStorage.setItem("token", $("#token").val());localStorage.setItem("user", $("#user").val())' value='set'> 
 
 
 <table class="table table-bordered">
@@ -43,12 +43,14 @@ var page = 1;
 
 function get(){
 	var token = localStorage.getItem('token');
+	var user = localStorage.getItem('user');	
 	$('#token').val(token);
+	$('#user').val(user);
 
-	if (!token)
-		return alert('set token');
+	if (!token || !user)
+		return alert('set token and user');
 		
-	$.get('https://api.github.com/users/zbycz/events?access_token='+token+'&page='+page, 
+	$.get('https://api.github.com/users/'+user+'/events?access_token='+token+'&page='+page, 
 		function(getdata){
 			data = data.concat(getdata);
 			page++;
