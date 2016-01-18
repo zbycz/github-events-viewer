@@ -111,7 +111,7 @@ function write(){
 		}
 		
 		if (r.type == 'CommitCommentEvent') {
-			action = 'Commented on commit: '+ r.payload.comment.path;
+			action = 'Commented on commit - file: '+ r.payload.comment.path;
 			link = r.payload.comment.html_url;
 		}
 
