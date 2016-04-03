@@ -2,23 +2,23 @@
       integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
       integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
-      
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
 <div class="container">
 
-<h1>my github events</h1>
+<h1>My github events viewer</h1>
 
-Github access token: (<a href="https://github.com/settings/tokens">https://github.com/settings/tokens</a>)
+Github access token: (get it <a href="https://github.com/settings/tokens">here</a>)
 <br>
-<input id='token'><input id='user' placeholder="user">
-<input type='button' onclick='localStorage.setItem("token", $("#token").val());localStorage.setItem("user", $("#user").val())' value='set'> 
+<input id='token' placeholder="token"><input id='user' placeholder="username">
+<input type='button' onclick='localStorage.setItem("token", $("#token").val());localStorage.setItem("user", $("#user").val())' value='set'>
 
 
 <table class="table table-bordered">
 	<tr>
 		<th style="    width: 186px;">date		</th>
-		<th>repo <br> <input type=checkbox checked id=winsite> winsite
+		<th>repo <br> <input id='filter' placeholder="filter">
 		<th>action <br> <input type=checkbox checked id=comments> comments only
 	</tr>
 	<tbody id="events">
@@ -40,17 +40,16 @@ Github access token: (<a href="https://github.com/settings/tokens">https://githu
 
 var data = [];
 var page = 1;
-
 function get(){
 	var token = localStorage.getItem('token');
-	var user = localStorage.getItem('user');	
+	var user = localStorage.getItem('user');
 	$('#token').val(token);
 	$('#user').val(user);
 
 	if (!token || !user)
 		return alert('set token and user');
-		
-	$.get('https://api.github.com/users/'+user+'/events?access_token='+token+'&page='+page, 
+
+	$.get('https://api.github.com/users/'+user+'/events?access_token='+token+'&page='+page,
 		function(getdata){
 			data = data.concat(getdata);
 			page++;
@@ -60,22 +59,22 @@ function get(){
 				get();
 		});
 }
+get(); //get first 3 pages
 
-get(1);
-	
+
 var eventTemplate = document.getElementById('eventTemplate').innerHTML;
 var events = document.getElementById('events');
 
-$('#winsite').click(write);
+$('#filter').keyup(write).val(localStorage.getItem('filter'));
 $('#comments').click(write);
 $('button').click(function(){ get(); })
 
 function write(){
-	console.log($('#winsite')[0].checked);
-	console.log($('#comments')[0].checked);
+  filter = $('#filter').val();
+  localStorage.setItem('filter', filter);
 
 	events.innerHTML = ''; //clear
-	
+
 
 	/** The shortest templating system - eval everyting between { and } */
 	function template(vars) {
@@ -92,11 +91,11 @@ function write(){
 
 	for (var i = 0; i < data.length; i++) {
 		var r = data[i];
-		
-		if ($('#winsite')[0].checked)
-			if (!r.repo.name.match(/^winsite/))
-				continue; 
-		
+
+		if (filter)
+			if (!r.repo.name.match(filter))
+				continue;
+
 		var link = "#";
 		var action = r.type;
 
@@ -109,7 +108,7 @@ function write(){
 			action = 'Commented on #' + r.payload.issue.number +' '+ r.payload.issue.title;
 			link = r.payload.issue.html_url;
 		}
-		
+
 		if (r.type == 'CommitCommentEvent') {
 			action = 'Commented on commit - file: '+ r.payload.comment.path;
 			link = r.payload.comment.html_url;
@@ -126,7 +125,7 @@ function write(){
 				action += r.payload.commits[x].message + '; ';
 			}
 		}
-		
+
 		if (action.match(/^Commits: embed release winsite/)) continue;
 		if (action.match(/^Commits: v?[0-9\.]+;/)) continue;
 		if ($('#comments')[0].checked)
