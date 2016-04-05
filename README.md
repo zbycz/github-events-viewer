@@ -3,7 +3,10 @@ Displays events from http://api.github.com/users/{name}/events - that means incl
 
 Github itself does provide only your public actions page: https://github.com/zbycz?tab=activity.
 
-- **[LIVE DEMO](https://rawgit.com/zbycz/github-events-viewer/master/github-event-viewer.html)**
+
+
+- **[LIVE VERSION v1.1](https://cdn.rawgit.com/zbycz/github-events-viewer/v1.1/github-event-viewer.html)** (cached forever on cdn.rawgit.com so nobody could hackily get the token)
+- [master branch demo](https://rawgit.com/zbycz/github-events-viewer/master/github-event-viewer.html)
 - "part" of [OctoMate chrome extension](https://github.com/rubyerme/chrome-github-mate#octo-mate) (formerly Github Mate)
 
 ## Author and licence
