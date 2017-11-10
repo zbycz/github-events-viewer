@@ -6,43 +6,50 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
 <div class="container">
+	<h1>My github events viewer</h1>
 
-<h1>My github events viewer</h1>
+	<p>
+		Displays your last actions, comments and commits on GitHub.
+		Events comes from <code>api.github.com/users/{name}/events</code> - which shows your own private events as well.
+		<br>
+		Github itself does provide only your public actions page: <code>https://github.com/zbycz?tab=activity</code>.
+	</p>
 
-<p>Very useful tool, which shows you your last actions on GitHub. Events comes from api.github.com/users/{name}/events - which shows your own private events as well.
-  <br>
-Github itself does provide only your public actions page: https://github.com/zbycz?tab=activity.
-</p>
+	<p>
+		Github username: <input id='user' size=10>,
+		Access token: <input id='token'> (get new token <a href="https://github.com/settings/tokens">here</a>, no permissions needed)
+		<input type='button' onclick='setTokenAndUsername()' value='Set'>
+	</p>
 
-Github access token: (get it <a href="https://github.com/settings/tokens">here</a>)
-<br>
-<input id='token' placeholder="token"><input id='user' placeholder="username">
-<input type='button' onclick='localStorage.setItem("token", $("#token").val());localStorage.setItem("user", $("#user").val())' value='set'>
-
-
-<table class="table table-bordered">
-	<tr>
-		<th style="    width: 186px;">date		</th>
-		<th>repo <br> <input id='filter' placeholder="filter">
-		<th>action <br> <input type=checkbox checked id=comments> comments only
-	</tr>
-	<tbody id="events">
-		<tr id="eventTemplate">
-			<td>{{date}}
-			<td>{{repo}}
-			<td><a href="{{link}}">{{action}}</a>
+	<table class="table table-bordered">
+		<tr>
+			<th style="width: 186px;">date</th>
+			<th>repo <br> <input id='filter' placeholder="filter">
+			<th>action <br> <input type=checkbox checked id=comments> comments only
 		</tr>
-	</tbody>
-</table>
-<button>load more</button>
+		<tbody id="events">
+			<tr id="eventTemplate">
+				<td>{{date}}
+				<td>{{repo}}
+				<td><a href="{{link}}" title="{{json}}">{{action}}</a>
+			</tr>
+		</tbody>
+	</table>
+	<button>load more</button>
 
-<p class="text-right"><a href="https://github.com/zbycz/github-events-viewer"><img src="http://github.com/favicon.ico" width="16" alt="">
-  zbycz/github-events-viewer v1.1</a>
+	<p class="text-right"><a href="https://github.com/zbycz/github-events-viewer"><img src="http://github.com/favicon.ico" width="16" alt="">
+	  zbycz/github-events-viewer v1.2</a>
 </div>
 
 
 
 <script>
+
+function setTokenAndUsername() {
+    localStorage.setItem("token", $("#token").val());
+    localStorage.setItem("user", $("#user").val());
+    location.reload();
+}
 
 var data = [];
 var page = 1;
@@ -53,7 +60,7 @@ function get(){
 	$('#user').val(user);
 
 	if (!token || !user)
-		return alert('set token and user');
+		return alert('To start, please, set username and token.');
 
 	$.get('https://api.github.com/users/'+user+'/events?access_token='+token+'&page='+page,
 		function(getdata){
@@ -73,7 +80,7 @@ var events = document.getElementById('events');
 
 $('#filter').keyup(write).val(localStorage.getItem('filter'));
 $('#comments').click(write);
-$('button').click(function(){ get(); })
+$('button').click(function(){ get(); });
 
 function write(){
   filter = $('#filter').val();
@@ -81,8 +88,7 @@ function write(){
 
 	events.innerHTML = ''; //clear
 
-
-	/** The shortest templating system - eval everyting between { and } */
+	/** The shortest templating system (by zbycz) - eval's everyting between { and } */
 	function template(vars) {
 		return eventTemplate.replace(/\{\{(.*?)\}\}/gm, function (match, code) {
 			for (var k in vars) this[k] = vars[k];
@@ -92,7 +98,7 @@ function write(){
 
 	String.prototype.ucfirst = function() {
 		return this.charAt(0).toUpperCase() + this.slice(1);
-	}
+	};
 
 
 	for (var i = 0; i < data.length; i++) {
@@ -112,7 +118,7 @@ function write(){
 
 		if (r.type == 'IssueCommentEvent') {
 			action = 'Commented on #' + r.payload.issue.number +' '+ r.payload.issue.title;
-			link = r.payload.issue.html_url;
+			link = r.payload.comment.html_url;
 		}
 
 		if (r.type == 'CommitCommentEvent') {
@@ -126,7 +132,7 @@ function write(){
 		}
 
 		if (r.type == 'PushEvent') {
-			action = 'Commits: ';
+			action = 'Pushed commits: ';
 			for (var x in r.payload.commits){
 				action += r.payload.commits[x].message + '; ';
 			}
@@ -143,7 +149,7 @@ function write(){
 			repo: r.repo.name,
 			action: action,
 			link: link,
-			json: JSON.stringify(r.payload)
+			json: JSON.stringify(r.payload).replace(/"/g, '').replace(/,/g, '\n')
 		});
 
 		events.appendChild(ch);
