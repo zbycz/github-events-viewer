@@ -14,3 +14,7 @@ Github itself does provide only your public actions page: https://github.com/zby
 (c) 2016,2017 [Pavel Zbytovský](http://zby.cz)
 
 Licenced under MIT license.
+
+## See also
+
+- [github-event-viewer](https://github.com/meganemura/github-event-viewer) - for (public) repo events
