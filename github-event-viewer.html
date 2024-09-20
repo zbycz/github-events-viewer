@@ -17,7 +17,7 @@
 
 	<p>
 		Github username: <input id='user' size=10>,
-		Access token: <input id='token'> (get new token <a href="https://github.com/settings/tokens">here</a>, no permissions needed)
+		Access token: <input id='token'> (get new "classic" token <a href="https://github.com/settings/tokens">here</a>, no permissions needed)
 		<input type='button' onclick='setTokenAndUsername()' value='Set'>
 	</p>
 
@@ -25,13 +25,15 @@
 		<tr>
 			<th style="width: 186px;">date</th>
 			<th>repo <br> <input id='filter' placeholder="filter">
-			<th>action <br> <input type=checkbox checked id=comments> comments only
+			<th>action <br> <input type=checkbox id=comments> comments only
+			<th>body length
 		</tr>
 		<tbody id="events">
 			<tr id="eventTemplate">
 				<td>{{date}}
 				<td>{{repo}}
 				<td><a href="{{link}}" title="{{json}}">{{action}}</a>
+				<td>{{len}}
 			</tr>
 		</tbody>
 	</table>
@@ -51,18 +53,25 @@ function setTokenAndUsername() {
     location.reload();
 }
 
+$.ajax({
+	beforeSend: function (xhr) {
+		xhr.setRequestHeader ("Authorization", "Bearer " + localStorage.getItem('token'));
+	},
+})
+
 var data = [];
 var page = 1;
 function get(){
-	var token = localStorage.getItem('token');
 	var user = localStorage.getItem('user');
-	$('#token').val(token);
 	$('#user').val(user);
 
 	if (!token || !user)
 		return alert('To start, please, set username and token.');
 
-	$.get('https://api.github.com/users/'+user+'/events?access_token='+token+'&page='+page,
+	$('#token').attr('placeholder', 'saved');
+
+
+	$.get('https://api.github.com/users/'+user+'/events?page='+page,
 		function(getdata){
 			data = data.concat(getdata);
 			page++;
@@ -88,7 +97,7 @@ function write(){
 
 	events.innerHTML = ''; //clear
 
-	/** The shortest templating system (by zbycz) - eval's everyting between { and } */
+	/** The shortest templating system (by zbycz) - eval everyting between {{ and }} */
 	function template(vars) {
 		return eventTemplate.replace(/\{\{(.*?)\}\}/gm, function (match, code) {
 			for (var k in vars) this[k] = vars[k];
@@ -110,15 +119,30 @@ function write(){
 
 		var link = "#";
 		var action = r.type;
+		var len = '';
 
 		if (r.type == 'IssuesEvent') {
 			action = r.payload.action.ucfirst() + ' issue #' + r.payload.issue.number + ' ' + r.payload.issue.title;
 			link = r.payload.issue.html_url;
+			len = r.payload.issue.body.length;
 		}
 
 		if (r.type == 'IssueCommentEvent') {
 			action = 'Commented on #' + r.payload.issue.number +' '+ r.payload.issue.title;
 			link = r.payload.comment.html_url;
+			len = r.payload.comment.body.length;
+		}
+
+		if (r.type == 'PullRequestReviewCommentEvent') {
+			action = 'Commented on PR #' + r.payload.pull_request.number +' '+ r.payload.pull_request.title;
+			link = r.payload.comment.html_url;
+			len = r.payload.comment.body.length;
+		}
+
+		if (r.type == 'PullRequestReviewEvent') {
+			action = 'Reviewed PR #' + r.payload.pull_request.number +' '+ r.payload.pull_request.title;
+			link = r.payload.review.html_url;
+			len = r.payload.review.body?.length ?? 0;
 		}
 
 		if (r.type == 'CommitCommentEvent') {
@@ -138,8 +162,6 @@ function write(){
 			}
 		}
 
-		if (action.match(/^Commits: embed release winsite/)) continue;
-		if (action.match(/^Commits: v?[0-9\.]+;/)) continue;
 		if ($('#comments')[0].checked)
 			if (!action.match(/^Commented/)) continue;
 
@@ -149,6 +171,7 @@ function write(){
 			repo: r.repo.name,
 			action: action,
 			link: link,
+			len: len,
 			json: JSON.stringify(r.payload).replace(/"/g, '').replace(/,/g, '\n')
 		});
 
