@@ -1,12 +1,13 @@
-# github-events-viewer
-Displays events from `http://api.github.com/users/{name}/events` - that means including events on your private repos.
-Useful if you need to remember what you did yesterday :-)
+# github-events-viewer 📆 
+**aka "What did I do yesterday?"**
 
-Github itself does provide only your public actions page: https://github.com/zbycz?tab=activity.
+Displays events from `http://api.github.com/users/{name}/events` - that means including events on your private repos. Github itself does provide only your public actions on your profile.
 
 
 - **[LIVE VERSION](https://zbycz.github.io/github-events-viewer/github-event-viewer.html)** (from master)
-- former part of [OctoMate chrome extension](https://github.com/rubyerme/chrome-github-mate#octo-mate) (formerly Github Mate)
+
+
+![screenshot](./screenshot.jpg)
 
 ## Author and licence
 
@@ -16,4 +17,5 @@ Licenced under MIT license.
 
 ## See also
 
+- this code was formerly part of [OctoMate chrome extension](https://github.com/rubyerme/chrome-github-mate#octo-mate) (called Github Mate before)
 - [github-event-viewer](https://github.com/meganemura/github-event-viewer) - for (public) repo events
