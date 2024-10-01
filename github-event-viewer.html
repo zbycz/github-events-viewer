@@ -47,6 +47,9 @@
 
 <script>
 
+const searchParams = new URLSearchParams(window.location.search)
+const dateFilter = searchParams.get('date'); // today | yesterday | this-week
+
 function setTokenAndUsername() {
     localStorage.setItem("token", $("#token").val());
     localStorage.setItem("user", $("#user").val());
@@ -116,6 +119,20 @@ function write(){
 		if (filter)
 			if (!r.repo.name.match(filter))
 				continue;
+
+		if (dateFilter) {
+			let beginningOfToday = new Date(new Date().setHours(0, 0, 0, 0));
+			let cutoff;
+			if (dateFilter === 'today')
+				cutoff = beginningOfToday;
+			if (dateFilter === 'yesterday')
+				cutoff = new Date(beginningOfToday - 24 * 60 * 60 * 1000);
+			if (dateFilter === 'this-week')
+				cutoff = new Date(beginningOfToday - new Date().getDay() * 24 * 60 * 60 * 1000);
+		
+			if (new Date(r.created_at) < cutoff)
+				continue;
+		}
 
 		var link = "#";
 		var action = r.type;
