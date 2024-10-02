@@ -9,6 +9,10 @@ Displays events from `http://api.github.com/users/{name}/events` - that means in
 
 ![screenshot](./screenshot.jpg)
 
+## Hidden Options
+
+- `?date=today|yesterday|this-week` - filter events by date
+
 ## Author and licence
 
 (c) 2016,2017,2024 [Pavel Zbytovský](http://zby.cz)
