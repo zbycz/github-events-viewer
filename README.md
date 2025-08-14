@@ -13,6 +13,10 @@ Displays events from `http://api.github.com/users/{name}/events` - that means in
 
 - `?date=today|yesterday|this-week` - filter events by date
 
+## NO realtime data
+As stated in the [docs](https://docs.github.com/en/rest/activity/events?apiVersion=2022-11-28#list-events-for-the-authenticated-user):
+> The API is not built to serve real-time use cases. Depending on the time of day, event latency can be anywhere from 30s to 6h.
+
 ## Author and licence
 
 (c) 2016,2017,2024 [Pavel Zbytovský](http://zby.cz)
